@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRADE JOURNAL | Stable Journal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* --- 1. CORE VARIABLES & COLORS (Professional Palette) --- */
+        :root {
+            --dark-bg: #111827; /* Darker Slate */
+            --light-bg: #f3f4f6; /* Off White */
+            --panel-dark: #1F2937; 
+            --panel-light: #ffffff;
+            --card-dark: #374151; /* Subtle contrast for cards */
+            --card-light: #e5e7eb; 
+            --text-dark: #f9fafb;
+            --text-light: #1f2937;
+            --border-dark: #4b5563; 
+            --border-light: #d1d5db;
+            --accent: #10b981; /* Fresh Emerald Green (Professional & positive) */
+            --accent-faint: rgba(16, 185, 129, 0.1);
+            --success: #059669; /* Slightly darker success */
+            --danger: #ef4444; 
+            --muted: #9ca3af; 
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition-time: 0.15s;
+        }
+
+        [data-theme="dark"] {
+            --bg: var(--dark-bg);
+            --panel: var(--panel-dark);
+            --card: var(--card-dark);
+            --text-color: var(--text-dark);
+            --border: var(--border-dark);
+        }
+
+        [data-theme="light"] {
+            --bg: var(--light-bg);
+            --panel: var(--panel-light);
+            --card: var(--card-light);
+            --text-color: var(--text-light);
+            --border: var(--border-light);
+        }
+
+        /* --- 2. GLOBAL & LAYOUT --- */
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            transition: background-color var(--transition-time), color var(--transition-time), border-color var(--transition-time), box-shadow var(--transition-time);
+        }
+
+        body {
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            min-height: 100vh;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 250px; 
+            padding: 25px;
+            background-color: var(--panel);
+            border-radius: 12px; 
+            box-shadow: var(--shadow-md);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-self: flex-start;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .app-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background-color: var(--border);
+        }
+
+        .nav-item.active {
+            background-color: var(--accent);
+            color: var(--panel-light);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+            border-color: var(--accent);
+        }
+
+        .panel {
+            display: none;
+            width: 100%;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        .panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 3. FORM STYLING --- */
+        /* Updated: Now placed in the Dashboard grid */
+        .trade-log-section {
+            padding: 20px;
+            background-color: var(--panel); /* Use panel for the form now */
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            /* Removed margin-top, grid will handle spacing */
+        }
+
+        .trade-log-section h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 5px;
+        }
+        
+        .form-group label {
+            display: block; /* Important for full width */
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        
+        .form-ctrl {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--card); /* Use card for contrast within panel */
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        .form-ctrl:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--accent-faint);
+        }
+
+        /* Selector Styling */
+        .selector-row {
+            display: flex;
+            border-radius: 6px;
+            background-color: var(--card);
+            padding: 3px;
+            border: 1px solid var(--border);
+        }
+        
+        .sel-btn {
+            flex-grow: 1;
+            text-align: center;
+            padding: 6px 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 4px;
+        }
+        
+        .sel-btn.active {
+            background-color: var(--accent);
+            color: var(--panel-light);
+            font-weight: 700;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--accent);
+            color: var(--panel-light);
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .btn-utility {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background-color: var(--card);
+            margin-top: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-utility:hover {
+            border-color: var(--accent);
+        }
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--panel-light);
+            border: 1px solid var(--danger);
+        }
+        .btn-danger:hover {
+            filter: brightness(1.1);
+        }
+
+        /* --- 4. DASHBOARD & CARDS --- */
+        .page-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        /* UPDATED: Unified Grid Definition */
+        .unified-dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columns across the main content */
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .card {
+            background-color: var(--panel);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        /* Specific styling for the initial metric card for better impact */
+        .metric-card-primary {
+            background-color: var(--accent-faint);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .metric-card-primary .metric, .metric-card-primary .card-title {
+            color: var(--accent) !important;
+        }
+        
+        .card-title {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .metric {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .metric-mini {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .mini-card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .mini-card {
+            padding: 15px;
+            background-color: var(--card);
+            border-radius: 8px;
+        }
+
+        .pos { color: var(--success) !important; }
+        .neg { color: var(--danger) !important; }
+        .text-muted { color: var(--muted) !important; font-size: 0.9rem;}
+
+        /* Weekly Grid */
+        .week-container { margin-bottom: 20px; }
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            padding: 10px;
+            background-color: var(--card);
+            border-radius: 8px;
+        }
+        
+        .day-col {
+            padding: 10px 5px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid transparent;
+            font-size: 0.9rem;
+        }
+
+        .day-col.has-trades { cursor: pointer; }
+        .day-col.has-trades:hover { background-color: var(--border); border-color: var(--accent); }
+        .day-head { font-weight: 600; font-size: 0.85rem; color: var(--muted); }
+        .day-pl { font-weight: 700; margin-top: 5px; }
+        .day-wr { font-size: 0.75rem; color: var(--muted); }
+
+        /* --- 5. TABLE STYLING --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background-color: var(--card);
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        
+        tr:last-child td { border-bottom: none; }
+        .text-center { text-align: center; }
+        .tag { background: var(--border); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: var(--text-color); }
+        .delete-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; }
+
+        /* --- 6. CHART CONTAINERS & FILTERS --- */
+        .chart-container {
+            background-color: var(--panel);
+            padding: 20px;
+            border-radius: 12px;
+            height: 400px; 
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap; 
+        }
+
+        .filter-bar button {
+            padding: 8px 15px;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--muted);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .filter-bar button.active {
+            background-color: var(--accent);
+            color: var(--panel-light);
+            border-color: var(--accent);
+        }
+
+        /* P&L ANALYTIC PAGE */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr; 
+            gap: 15px;
+        }
+
+        .chart-full { height: 450px; }
+
+        .stats-sidebar {
+            background-color: var(--panel);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .stats-sidebar h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 15px;}
+
+        .stat-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-item:last-child { border-bottom: none; }
+        .stat-label { font-size: 0.9rem; color: var(--muted); font-weight: 500;}
+
+        /* Calendar */
+        .cal-day, .cal-empty {
+            height: 70px;
+            padding: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-align: right;
+            position: relative;
+            background-color: var(--card);
+            cursor: default;
+        }
+        .cal-empty { background-color: transparent; border: none; }
+        .day-header { text-align: center; font-weight: 700; color: var(--muted); padding: 5px 0;}
+        .cal-date-label { font-size: 0.8rem; color: var(--muted); }
+        .cal-pl { font-size: 0.95rem; font-weight: 700; margin-top: 5px; }
+        .cal-day.has-trades:hover { border-color: var(--accent); cursor: pointer; }
+        .cal-day.cal-today { border: 2px solid var(--accent); background-color: var(--accent-faint); }
+        
+        /* Modals */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background-color: var(--panel); padding: 25px; border-radius: 12px;
+            max-width: 500px; width: 90%; box-shadow: var(--shadow-md);
+        }
+        .modal-header { border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
+        .modal-header h3 { margin: 0; font-weight: 800; font-size: 1.5rem; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted); }
+        .modal-footer-pl { text-align: right; margin-top: 15px; font-weight: 700; font-size: 1.1rem; }
+        .modal-table { border-radius: 8px; overflow: hidden; }
+
+        /* Responsiveness */
+        @media (max-width: 1024px) {
+            .unified-dashboard-grid, .analytics-grid { grid-template-columns: 1fr; }
+            .sidebar { width: 100%; position: static; order: -1; margin-bottom: 15px; }
+            body { flex-direction: column; padding: 15px; gap: 15px; }
+            .trade-log-section { margin-top: 15px; }
+            .chart-full { height: 350px; }
+            .card[style*="grid-column: span 2"] {
+                grid-column: span 1 !important; /* Force chart to single column on small screens */
+            }
+        }
+
+        @media (max-width: 600px) {
+            .input-grid { grid-template-columns: 1fr; }
+            .week-grid { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
+            .day-col { font-size: 0.8rem; }
+            .app-title { text-align: center; }
+            .mini-card-grid { grid-template-columns: 1fr 1fr; } /* Reset mini-card grid for mobile */
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="app-title">TRADE JOURNAL</div>
+            <p class="text-muted">Journaling on <span id="currentDate"></span></p>
+        </div>
+
+        <nav class="nav-list" style="margin-bottom: 20px;">
+            <button class="nav-item active" onclick="nav('dashboard', event)">🏠 Dashboard</button>
+            <button class="nav-item" onclick="nav('performance', event)">📈 Performance</button>
+            <button class="nav-item" onclick="nav('pl', event)">💵 P&L Analytic</button>
+            <button class="nav-item" onclick="nav('calendar', event)">🗓️ Calendar View</button>
+            <button class="nav-item" onclick="nav('full-list', event)">📜 Full Trade List</button>
+            <button class="nav-item" onclick="nav('strategy', event)">📚 Strategy Breakdown</button>
+        </nav>
+
+        <div style="margin-top: auto; padding-top: 15px;">
+            <button onclick="document.getElementById('themeBtn').click()" class="btn-utility">🎨 Toggle Theme</button>
+            <button onclick="resetData()" class="btn-utility btn-danger">⚠️ Reset All Data</button>
+            <button id="themeBtn" style="display:none;"></button>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+        <h1 id="pageTitle" class="page-title">Dashboard</h1>
+        
+        <section id="dashboard" class="panel active">
+            
+            <div class="unified-dashboard-grid">
+            
+                <div class="card week-container" style="grid-column: 1 / -1; margin-bottom: 5px; margin-top: 0;"> 
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 700;">WEEKLY OVERVIEW: <span id="weekRange"></span></span>
+                        <span class="text-muted" style="cursor:pointer;" onclick="nav('calendar')">View Calendar 🗓️</span>
+                    </div>
+                    <div id="weekGrid" class="week-grid">
+                        </div>
+                    
+                    <div class="mini-card-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 15px;">
+                        <div class="mini-card" style="text-align:center;">
+                            <div class="card-title">WEEK P/L</div>
+                            <div id="weekTotalPL" class="metric-mini neg">₹0</div>
+                        </div>
+                        <div class="mini-card" style="text-align:center;">
+                            <div class="card-title">TRADES</div>
+                            <div id="weekTotalTrades" class="metric-mini">0</div>
+                        </div>
+                        <div class="mini-card" style="text-align:center;">
+                            <div class="card-title">WINS / LOSSES</div>
+                            <div id="weekWinsLosses" class="metric-mini">0 / 0</div>
+                        </div>
+                        <div class="mini-card" style="text-align:center;">
+                            <div class="card-title">WIN RATE</div>
+                            <div id="weekWinRate" class="metric-mini">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-title">DAILY WIN RATE DISTRIBUTION</div>
+                    <div style="display: flex; gap: 30px; height: 180px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                        <div style="flex-shrink: 0; width: 180px; height: 180px;">
+                            <canvas id="winRatePieChart"></canvas>
+                        </div>
+                        <div id="pieChartLegend" style="flex-grow: 1; font-size: 0.9rem; max-width: 250px;">
+                            </div>
+                    </div>
+                </div>
+                
+                <section class="trade-log-section">
+                    <h3>Log New Trade</h3>
+                    <form id="tradeForm">
+                        
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label for="inpPL">P/L (<span id="currencyUnit">INR</span>)</label>
+                                <input type="number" class="form-ctrl" id="inpPL" step="any" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="inpResultType">Result</label>
+                                <select class="form-ctrl" id="inpResultType" required>
+                                    <option value="Win">Win</option>
+                                    <option value="Loss">Loss</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label for="inpDate">Date</label>
+                                <input type="date" class="form-ctrl" id="inpDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Asset Class</label>
+                                <div class="selector-row" id="assetSel">
+                                    <div class="sel-btn active" data-val="Stock">Stock</div>
+                                    <div class="sel-btn" data-val="Index">Index</div>
+                                    <div class="sel-btn" data-val="Forex">Forex</div>
+                                    <div class="sel-btn" data-val="Crypto">Crypto</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label for="inpSym">Symbol</label>
+                                <input type="text" class="form-ctrl" id="inpSym" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="inpStrat">Strategy Tag</label>
+                                <input type="text" class="form-ctrl" id="inpStrat" list="strategyTags" required>
+                                <datalist id="strategyTags">
+                                    <optgroup label="Trend Following">
+                                        <option value="Trend Continuation (Breakout)">Trend Continuation (Breakout)</option>
+                                        <option value="Moving Average Crossover">Moving Average Crossover</option>
+                                        <option value="Turtle Trading">Turtle Trading</option>
+                                        <option value="Pullback/Retracement Trade">Pullback/Retracement Trade</option>
+                                    </optgroup>
+                                    <optgroup label="Mean Reversion">
+                                        <option value="Bollinger Band Fade">Bollinger Band Fade</option>
+                                        <option value="RSI/Stochastic Overbought/Oversold">RSI/Stochastic Overbought/Oversold</option>
+                                        <option value="Channel Trading (Range)">Channel Trading (Range)</option>
+                                        <option value="VWAP Reversion">VWAP Reversion</option>
+                                    </optgroup>
+                                    <optgroup label="Day Trading">
+                                        <option value="Scalping (Quick In/Out)">Scalping (Quick In/Out)</option>
+                                        <option value="Momentum Trading (High Volume)">Momentum Trading (High Volume)</option>
+                                        <option value="Open/Close Range Breakout">Open/Close Range Breakout</option>
+                                        <option value="Pivot Point Reversal">Pivot Point Reversal</option>
+                                    </optgroup>
+                                    <optgroup label="Options & Derivatives">
+                                        <option value="Iron Condor/Butterfly (Non-Directional)">Iron Condor/Butterfly (Non-Directional)</option>
+                                        <option value="Straddle/Strangle (Volatility)">Straddle/Strangle (Volatility)</option>
+                                        <option value="Cash-Secured Put (Income)">Cash-Secured Put (Income)</option>
+                                        <option value="Covered Call">Covered Call</option>
+                                    </optgroup>
+                                    <optgroup label="Structure & Patterns">
+                                        <option value="Head and Shoulders (Reversal)">Head and Shoulders (Reversal)</option>
+                                        <option value="Double Top/Bottom">Double Top/Bottom</option>
+                                        <option value="Fibonacci Retracement">Fibonacci Retracement</option>
+                                        <option value="Elliott Wave Count">Elliott Wave Count</option>
+                                    </optgroup>
+                                    <optgroup label="Fundamental/News">
+                                        <option value="Earnings Report Play">Earnings Report Play</option>
+                                        <option value="Economic Data Release (e.g., NFP)">Economic Data Release (e.g., NFP)</option>
+                                        <option value="Event Arbitrage (Merger/Acquisition)">Event Arbitrage (Merger/Acquisition)</option>
+                                    </optgroup>
+                                    <option value="Personal/Custom Strategy">Personal/Custom Strategy</option>
+                                    <option value="No Clear Strategy (Gambling)">No Clear Strategy (Gambling)</option>
+                                </datalist>
+                            </div>
+                        </div>
+                        
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label for="inpConf">Confidence (1-5)</label>
+                                <input type="number" class="form-ctrl" id="inpConf" min="1" max="5">
+                            </div>
+                            <div class="form-group">
+                                <label for="inpReason">Notes (Optional)</label>
+                                <textarea class="form-ctrl" id="inpReason" rows="1"></textarea>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit">LOG TRADE</button>
+                    </form>
+                </section>
+                
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-title">STRATEGY PERFORMANCE</div>
+                    <div class="mini-card-grid">
+                        <div class="mini-card">
+                            <div class="card-title" style="margin-bottom: 0;">BEST STRATEGY</div>
+                            <div id="bestStratName" class="metric-mini pos" style="margin-bottom: 5px;">-</div>
+                            <small id="bestStratVal" class="text-muted">₹0</small>
+                        </div>
+                        <div class="mini-card">
+                            <div class="card-title" style="margin-bottom: 0;">WORST STRATEGY</div>
+                            <div id="worstStratName" class="metric-mini neg" style="margin-bottom: 5px;">-</div>
+                            <small id="worstStratVal" class="text-muted">₹0</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">RECENT TRADES</div>
+                    <table id="dashboardTable">
+                        <thead>
+                            <tr><th>Date</th><th>Symbol</th><th>Strategy</th><th>P/L</th><th>Conf</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="5" class="text-center text-muted">No trades logged yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div> 
+            </section>
+
+        <section id="performance" class="panel">
+            <div class="filter-bar">
+                <button data-period="ALL" class="active" onclick="renderChart('ALL')">All Time</button>
+                <button data-period="1Y" onclick="renderChart('1Y')">1 Year</button>
+                <button data-period="1M" onclick="renderChart('1M')">1 Month</button>
+                <button data-period="1W" onclick="renderChart('1W')">1 Week</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </section>
+
+        <section id="pl" class="panel">
+            <div class="analytics-grid">
+                <div class="card chart-full">
+                    <canvas id="mainHistogram"></canvas>
+                </div>
+                <div class="stats-sidebar">
+                    <h3>Performance Summary</h3>
+                    
+                    <div class="filter-bar w-full" id="plFilterBar" style="flex-wrap: wrap;">
+                        <button data-period="7D" class="active" onclick="renderPLAnalyticStats('7D')">Last 7 Days</button>
+                        <button data-period="1M" onclick="renderPLAnalyticStats('1M')">Last 30 Days</button>
+                        <button data-period="CUSTOM" onclick="openCustomDateModal()">Custom Range</button>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">Total Trades</div>
+                        <div id="anaTradeCount" class="metric-mini">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Win Rate</div>
+                        <div id="anaWinRate" class="metric-mini">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Average Win</div>
+                        <div id="anaAvgWin" class="metric-mini pos">₹0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Average Loss</div>
+                        <div id="anaAvgLoss" class="metric-mini neg">₹0</div>
+                    </div>
+
+                    <h3 style="margin-top: 20px;">Today's Summary</h3>
+                    <div class="stat-item">
+                        <div class="stat-label">Today's P/L</div>
+                        <div id="todayPL" class="metric-mini neg">₹0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Today's Trades</div>
+                        <div id="todayTrades" class="metric-mini">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Today's Win Rate</div>
+                        <div id="todayWR" class="metric-mini">-</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="calendar" class="panel">
+            <h2 id="calendarTitle" class="page-title" style="font-size: 1.8rem;">Calendar View</h2>
+            <div class="card" style="padding: 10px;">
+                <div id="calGrid" class="week-grid" style="grid-template-columns: repeat(7, 1fr); gap: 5px;">
+                    </div>
+            </div>
+        </section>
+
+        <section id="full-list" class="panel">
+            <div class="card" style="padding: 0;">
+                <table id="fullTable">
+                    <thead>
+                        <tr><th>Date</th><th>Symbol</th><th>Asset</th><th>Strategy</th><th>Confidence</th><th>Reason</th><th>P/L</th><th>Del</th></tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="strategy" class="panel">
+            <div class="card" style="padding: 0;">
+                <table id="stratTable">
+                    <thead>
+                        <tr><th>Strategy</th><th>Count</th><th>Win Rate</th><th>Avg P/L</th><th>Total P/L</th></tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="dayModal" class="modal" onclick="closeDayDetailModal(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Day Trades</h3>
+                <button class="modal-close" onclick="closeDayDetailModal(event)">×</button>
+            </div>
+            <div id="modalContent">
+                </div>
+        </div>
+    </div>
+
+    <div id="customDateModal" class="modal" onclick="closeCustomDateModal(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Custom Range</h3>
+                <button class="modal-close" onclick="closeCustomDateModal(event)">×</button>
+            </div>
+            <form onsubmit="handleCustomDate(event)">
+                <div class="input-grid">
+                    <div class="form-group">
+                        <label for="customStart">Start Date</label>
+                        <input type="date" class="form-ctrl" id="customStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customEnd">End Date</label>
+                        <input type="date" class="form-ctrl" id="customEnd" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">APPLY FILTER</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="tade.js"></script>
+</body>
+</html>
